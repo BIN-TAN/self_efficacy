@@ -6,7 +6,7 @@ import time
 t = time.process_time()
 
 
-##############################################################################method 3: use for-loop
+##############################################################################
 from xgboost import XGBRegressor
 from sklearn.model_selection import GridSearchCV, KFold
 import pandas as pd

@@ -1,11 +1,5 @@
 ---
-title: "505 study"
-author: "BT"
-date: "11/11/2021"
-output: html_document
-editor_options: 
-  chunk_output_type: console
-chunk_output_type: console
+
 ---
 ```{r}
 #install.packages(c("foreign", "dplyr", "ggplot2", "tidyr", "intsvy", "haven", "ggrepel"))

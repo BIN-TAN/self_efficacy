@@ -1,0 +1,817 @@
+---
+title: "505 study"
+author: "BT"
+date: "11/11/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+```{r}
+#install.packages(c("foreign", "dplyr", "ggplot2", "tidyr", "intsvy", "haven", "ggrepel"))
+library("foreign")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+library("intsvy")
+library(haven)
+library(ggrepel)
+```
+
+section0: data preparation 
+```{r}
+memory.limit(size = 120000)
+data <- read.spss("PISA2018.sav", use.value.labels = TRUE, to.data.frame = TRUE)
+data2 <- read.spss("school_data.sav", use.value.labels = TRUE, to.data.frame = TRUE)
+data3 <- read.spss("teacher_data.sav", use.value.labels = TRUE, to.data.frame = TRUE)
+
+class(data)
+rev(colnames(backupdata))
+
+databackup <- data
+```
+
+add focal data (REVERSED)
+```{r}
+#CATEGORICAL DATA NEEDS FURTHER MANIPULATIONS According to the index
+focal_ <- c("ST004D01T", #gender (female/female)
+                       
+                       "ST005Q01TA", #mother_education (labels)
+                       
+                       "ST006Q01TA", "ST006Q02TA","ST006Q03TA","ST006Q04TA", #mother_qualification (labels)
+                       
+                       "ST007Q01TA", #father_education (labels)
+                       
+                       "ST008Q01TA", "ST008Q02TA","ST008Q03TA","ST008Q04TA", #father_qualification (labels)
+                       
+                       "ST011Q01TA", "ST011Q02TA", "ST011Q03TA", "ST011Q04TA", "ST011Q05TA",   #home possessions (mixed)
+                       "ST011Q06TA", "ST011Q07TA", "ST011Q08TA", "ST011Q09TA", "ST011Q10TA", 
+                       "ST011Q11TA", "ST011Q12TA", "ST011Q16NA",
+                       "ST012Q01TA", "ST012Q02TA", "ST012Q03TA", "ST012Q05NA", 
+                       "ST012Q06NA", "ST012Q07NA", "ST012Q08NA", "ST012Q09NA", "ST013Q01TA",
+
+#dropped country specific possessions                      
+                                            
+                       "ST019AQ01T", #self_immigration_background (label) 
+                       
+                       "ST021Q01TA", #age_of_immigrating (numerical)
+
+                       "ST019BQ01T", "ST019CQ01T", #parental_immigration_background (label)
+
+  
+                      "ST125Q01NA", #age_of_<ISCED 0> (numerical*transfer)
+                      
+                      "ST126Q01TA", #age_of_<ISCED 1> (numerical*transfer)
+                      
+                      "ST127Q01TA", "ST127Q02TA", "ST127Q03TA", #repeated_grade (label)
+                      
+                      "ST097Q01TA", "ST097Q02TA","ST097Q03TA","ST097Q04TA","ST097Q05TA",#disciplinary_climate
+                      
+                      "ST100Q01TA", "ST100Q02TA", "ST100Q03TA", "ST100Q04TA", #teacher_support
+                      
+                      "ST102Q01TA", "ST102Q02TA", "ST102Q03TA", "ST102Q04TA", #teacher-directed instruction
+                      
+                      "ST211Q01HA", "ST211Q02HA", "ST211Q03HA", #teacher_understanding
+                      
+                      "ST212Q01HA", "ST212Q02HA", "ST212Q03HA", #adaptive_instruction
+
+                      "ST104Q02NA", "ST104Q03NA", "ST104Q04NA", #teacher_feedback
+                      
+                      "ST213Q01HA", "ST213Q02HA", "ST213Q03HA", "ST213Q04HA", #teacher_enthusiasm
+                      
+                      "ST152Q05IA", "ST152Q06IA", "ST152Q07IA", "ST152Q08IA", #Teachers_stimulation_of_reading_engagement 
+                      
+                      "ST161Q01HA", "ST161Q02HA", "ST161Q03HA", "ST161Q06HA", "ST161Q07HA", "ST161Q08HA", #reading_self_concept 
+                      
+                      "ST016Q01NA", #life_sanctification
+                      
+                      "ST036Q05TA", "ST036Q06TA", "ST036Q08TA",  #value_of_school
+
+#education expectation is dropped because of high non response rate
+          
+                       "ST181Q02HA", "ST181Q03HA", "ST181Q04HA", #Attitudes_competition
+                  
+                       "ST182Q03HA", "ST182Q04HA", "ST182Q05HA", "ST182Q06HA", #Motivation_to_mastering
+            
+                       "ST183Q01HA", "ST183Q02HA", "ST183Q03HA", #fear_of_failure
+            
+                       "ST184Q01HA", #fixed_mindset (0~3)
+            
+                       "ST188Q01HA", "ST188Q02HA", "ST188Q03HA", "ST188Q06HA", "ST188Q07HA", #self_efficacy
+            
+                       "ST185Q01HA", "ST185Q02HA", "ST185Q03HA", #Meaning_in_life
+
+                       "ST186Q05HA", "ST186Q01HA", "ST186Q03HA", #positive emotions
+
+#negative emotions has low internal consistency
+
+                        "ST186Q06HA", #scared,
+                        "ST186Q07HA", #lively
+                        "ST186Q10HA", #miserable
+                        "ST186Q09HA",#proud
+                        "ST186Q02HA",#afraid
+                        "ST186Q08HA",#sad
+
+                        "ST208Q01HA", "ST208Q02HA", "ST208Q04HA", #learning_goal
+           
+                        "ST188Q01HA", "ST188Q02HA", "ST188Q03HA", "ST188Q06HA", "ST188Q07HA", #self-efficacy
+
+                        "ST034Q01TA","ST034Q02TA","ST034Q03TA","ST034Q04TA","ST034Q05TA","ST034Q06TA", #sense_of_belonging
+
+                        "ST215Q01HA", "ST215Q02HA", "ST215Q03HA", "ST215Q04HA", "ST215Q05HA", #empathy
+                        
+                        "ST160Q01IA", "ST160Q02IA", "ST160Q03IA", "ST160Q04IA", "ST160Q05IA", #Enjoyment of reading 
+                        
+                        "ST205Q01HA", "ST205Q02HA","ST205Q03HA","ST205Q04HA", #student_competition      
+                                  
+                        "ST060Q01NA", #classes_per_week
+                        
+                        "ST061Q01NA", #minutes_per_class
+                        
+                        "ST062Q01TA", "ST062Q02TA", #skipped_class
+                        
+                        "ST062Q03TA", #late_in_class
+                        
+                        "ST038Q03NA", "ST038Q04NA", "ST038Q05NA", "ST038Q06NA", "ST038Q07NA", "ST038Q08NA", #exposure_to_bulling          
+                                   
+                        "ST207Q01HA", "ST207Q02HA", "ST207Q03HA", "ST207Q04HA", "ST207Q05HA", #attitude_bulling
+      
+                        "ST123Q02NA", "ST123Q03NA", "ST123Q04NA", #parent_emotion_support
+                                               
+                        "ST206Q01HA", "ST206Q02HA", "ST206Q03HA", "ST206Q04HA", #student_cooperation
+                        
+                        "PV1READ", "PV2READ", "PV3READ", "PV4READ", "PV5READ", #reading_performance
+                        "PV6READ", "PV7READ", "PV8READ", "PV9READ", "PV10READ",
+                                   
+                        "PV1MATH", "PV2MATH", "PV3MATH", "PV4MATH", "PV5MATH", #math_performance
+                        "PV6MATH", "PV7MATH", "PV8MATH", "PV9MATH", "PV10MATH", 
+                                   
+                        "PV1SCIE", "PV2SCIE", "PV3SCIE", "PV4SCIE", "PV5SCIE", #science_performance
+                        "PV6SCIE", "PV7SCIE", "PV8SCIE", "PV9SCIE", "PV10SCIE") 
+
+dataBACK <- data[focal_]      
+data <- dataBACK
+
+for(i in 1:ncol(data)){
+   data[, i] = as.character(data[, i]) 
+}
+
+data[data == "Strongly disagree"] <- "0"
+data[data == "Disagree"] <- "1"
+data[data == "Agree"] <- "2"
+data[data == "Strongly agree"] <- "3"
+
+data[data == "ISCED level 5A or 6"] <- "6"
+data[data == "ISCED level 5B"] <- "5"
+data[data == "ISCED level 3A"] <- "4"
+data[data == "ISCED level 3B, 3C"] <- "3"
+data[data == "ISCED level 2"] <- "2"
+data[data == "ISCED level 1"] <- "1"
+data[data == "She did not complete  ISCED level 1"] <- "0"
+data[data == "He did not complete  ISCED level 1"] <- "0"
+
+data[data == "Yes"] <- "1"
+data[data == "No"] <- "0"
+
+data[data == "None"] <- "0"
+data[data == "One"] <- "1"
+data[data == "Two"] <- "2"
+data[data == "Three or more"] <- "3"
+data[data == "Three"] <- "3"
+data[data == "Four or more"] <- "4"
+
+data[data == "0-10 books"] <- "0"
+data[data == "11-25 books"] <- "1"
+data[data == "26-100 books"] <- "2"
+data[data == "101-200 books"] <- "3"
+data[data == "201-500 books"] <- "4"
+data[data == "More than 500 books"] <- "5"
+
+data[data == "Country of test"] <- "0"
+data[data == "Other country"] <- "1"
+
+data[data == "I do not remember"] <- NA
+data[data == "I did not attend ISCED 0"] <- "0"
+data[data == "1 year or younger"] <- "1"
+data[data == "2 years"] <- "2"
+data[data == "3 years"] <- "3"
+data[data == "4 years"] <- "4"
+data[data == "5 years"] <- "5"
+data[data == "6 years or older"] <- "6"
+
+data[data == "No, never"] <- "0"
+data[data == "Yes, once"] <- "1"
+data[data == "Yes, twice or more"] <- "2"
+
+data[data == "Every lesson"] <- "3"
+data[data == "Most lessons"] <- "2"
+data[data == "some lessons"] <- "1"
+
+data[data  == "Never or hardly ever"] <- "0"
+data[data  == "In some lessons"] <- "1"
+data[data  == "In most lessons"] <- "2"
+data[data == "In all lessons"] <- "3"
+
+data[data  == "Never or almost never"] <- "0"
+data[data == "Some lessons"] <- "1"
+data[data== "Many lessons"] <- "2"
+data[data == "Every lesson or almost every lesson"] <- "3"
+
+data[data == "I don't know what it is"] <- NA  
+data[data == "Never or almost never"] <- "0"
+data[data == "Several times a month"] <- "1"
+data[data== "Several times a week"] <- "2"
+data[data == "Several times a day"] <- "3"
+
+data[data == "Never"] <- "0"
+data[data == "Rarely"] <- "1"
+data[data == "Sometimes"] <- "2"
+data[data == "Always"] <- "3"
+
+data[data == "Female"] <- "0"
+data[data == "Male"] <- "1"
+
+data[data == "Not at all true of me"] <- "0"
+data[data == "Slightly true of me"] <- "1"
+data[data== "Moderately true of me"] <- "2"
+data[data == "Very true of me"] <- "3"
+data[data == "Extremely true of me"] <- "4"
+
+data[data == "Not at all like me"] <- "0"
+data[data == "Not much like me"] <- "1"
+data[data == "Somewhat like me"] <- "2"
+data[data == "Mostly like me"] <- "3"
+data[data == "Very much like me"] <- "4"
+
+data[data == "Not at all true"] <- "0"
+data[data == "Slightly true"] <- "1"
+data[data == "Very true"] <- "2"
+data[data == "Extremely true"] <- "3"
+
+data[data == "One or two times"] <- "1"
+data[data == "Three or four times"] <- "2"
+data[data == "Five or more times"] <- "3"
+
+data[data == "A few times a year"] <- "1"
+data[data == "A few times a month"] <- "2"
+data[data == "Once a week or more"] <- "3"
+
+databackup <- data
+data <- databackup
+
+for(i in 1:ncol(data)){
+   data[, i] = as.numeric(data[, i]) 
+}
+
+number_data <- data
+data <- number_data
+
+
+#drop rows if self-efficacy is missing and then seperate self_efficacy at the point of 5
+data <-  data[complete.cases(data[c("ST188Q01HA", "ST188Q02HA", "ST188Q03HA", "ST188Q06HA", "ST188Q07HA")]),] 
+
+#replace missing value for upper self-efficacy (remember to drop self_efficacy and its components)
+for(i in 1:ncol(data)){
+  data[is.na(data[,i]), i] <- median(data[,i], na.rm = TRUE)
+}
+
+#reverse scores
+data$ST161Q06HA <- abs(data$ST161Q06HA - 3)
+data$ST161Q07HA <- abs(data$ST161Q07HA - 3)
+data$ST161Q08HA <- abs(data$ST161Q08HA - 3)
+data$ST160Q04IA <- abs(data$ST160Q04IA - 3)
+data$ST160Q05IA <- abs(data$ST160Q05IA - 3)
+```
+
+```{r}
+#step 1, calculate 2PL irt scores
+self_efficacy <- data[c("ST188Q01HA", "ST188Q02HA", "ST188Q03HA", 
+                     "ST188Q06HA", "ST188Q07HA" )]
+model.gpcm <- 'self_efficacy = 1-5' 
+results.gpcm <- mirt(data=self_efficacy, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["self_efficacy"] <- fullscores_gpcm[,1]
+
+
+disciplinary_climate <- data[c("ST097Q01TA", "ST097Q02TA", "ST097Q03TA", 
+                               "ST097Q04TA")]
+model.gpcm <- 'disciplinary_climate = 1-4' 
+results.gpcm <- mirt(data=disciplinary_climate, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["disciplinary_climate"] <- fullscores_gpcm[,1]
+
+teacher_support <- data[c("ST100Q01TA", "ST100Q02TA", "ST100Q03TA", 
+                          "ST100Q04TA")]
+model.gpcm <- 'teacher_support = 1-4' 
+results.gpcm <- mirt(data=teacher_support, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["teacher_support"] <- fullscores_gpcm[,1]
+
+
+teacher_directed_instruction <- data[c("ST102Q01TA", "ST102Q02TA", "ST102Q03TA", 
+                          "ST102Q04TA")]
+model.gpcm <- 'teacher_directed_instruction = 1-4' 
+results.gpcm <- mirt(data=teacher_directed_instruction, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["teacher_directed_instruction"] <- fullscores_gpcm[,1]
+
+
+teacher_understanding <- data[c("ST211Q01HA", "ST211Q02HA", "ST211Q03HA")]
+model.gpcm <- 'teacher_understanding = 1-3' 
+results.gpcm <- mirt(data=teacher_understanding, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["teacher_understanding"] <- fullscores_gpcm[,1]
+
+
+adaptive_instruction <- data[c("ST212Q01HA", "ST212Q02HA", "ST212Q03HA")]
+model.gpcm <- 'adaptive_instruction = 1-3' 
+results.gpcm <- mirt(data=adaptive_instruction, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["adaptive_instruction"] <- fullscores_gpcm[,1]
+
+
+teacher_feedback <- data[c("ST104Q02NA", "ST104Q03NA", "ST104Q04NA")]
+model.gpcm <- 'teacher_feedback = 1-3' 
+results.gpcm <- mirt(data=teacher_feedback, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["teacher_feedback"] <- fullscores_gpcm[,1]
+
+
+
+teacher_enthusiasm <- data[c("ST213Q01HA", "ST213Q02HA", "ST213Q03HA", "ST213Q04HA")]
+model.gpcm <- 'teacher_enthusiasm = 1-4' 
+results.gpcm <- mirt(data=teacher_enthusiasm, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["teacher_enthusiasm"] <- fullscores_gpcm[,1]
+
+
+reading_self_concept <- data[c("ST161Q01HA", "ST161Q02HA", "ST161Q03HA")]
+model.gpcm <- 'reading_self_concept = 1-3' 
+results.gpcm <- mirt(data=reading_self_concept, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["reading_self_concept"] <- fullscores_gpcm[,1]
+
+
+reading_self_concept <- data[c("ST161Q01HA", "ST161Q02HA", "ST161Q03HA",
+                               "ST161Q06HA", "ST161Q07HA", "ST161Q08HA")]
+model.gpcm <- 'reading_self_concept = 1-6' 
+results.gpcm <- mirt(data=reading_self_concept, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["reading_self_concept"] <- fullscores_gpcm[,1]
+
+
+value_of_school <- data[c("ST036Q05TA", "ST036Q06TA", "ST036Q08TA")]
+model.gpcm <- 'value_of_school = 1-3' 
+results.gpcm <- mirt(data=value_of_school, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["value_of_school"] <- fullscores_gpcm[,1]
+
+
+attitudes_competition <- data[c("ST181Q02HA", "ST181Q03HA", "ST181Q04HA")]
+model.gpcm <- 'attitudes_competition = 1-3' 
+results.gpcm <- mirt(data=attitudes_competition, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["attitudes_competition"] <- fullscores_gpcm[,1]
+
+
+motivation_to_mastering <- data[c("ST182Q03HA", "ST182Q04HA", "ST182Q05HA","ST182Q06HA")]
+model.gpcm <- 'motivation_to_mastering = 1-4' 
+results.gpcm <- mirt(data=motivation_to_mastering, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["motivation_to_mastering"] <- fullscores_gpcm[,1]
+
+
+interest <- data[c("ST160Q01IA","ST160Q02IA","ST160Q03IA","ST160Q04IA","ST160Q05IA")]
+model.gpcm <- 'interest = 1-5' 
+results.gpcm <- mirt(data=interest, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["interest"] <- fullscores_gpcm[,1]
+
+fear <- data[c("ST183Q01HA","ST183Q02HA","ST183Q03HA")]
+model.gpcm <- 'fear = 1-3' 
+results.gpcm <- mirt(data=fear, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["fear"] <- fullscores_gpcm[,1]
+
+learning_goal <- data[c("ST208Q01HA","ST208Q02HA","ST208Q04HA")]
+model.gpcm <- 'learning_goal = 1-3' 
+results.gpcm <- mirt(data=learning_goal, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["learning_goal"] <- fullscores_gpcm[,1]
+
+
+positive_emotions <- data[c("ST186Q05HA","ST186Q01HA","ST186Q03HA")]
+model.gpcm <- 'positive_emotions = 1-3' 
+results.gpcm <- mirt(data=positive_emotions, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["positive_emotions"] <- fullscores_gpcm[,1]
+
+
+meaning_in_life <- data[c("ST185Q01HA","ST185Q02HA","ST185Q03HA")]
+model.gpcm <- 'meaning_in_life = 1-3' 
+results.gpcm <- mirt(data=meaning_in_life, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["meaning_in_life"] <- fullscores_gpcm[,1]
+
+sense_of_belongling <- data[c("ST034Q01TA","ST034Q02TA","ST034Q03TA", "ST034Q04TA",
+                              "ST034Q05TA", "ST034Q06TA")]
+model.gpcm <- 'sense_of_belongling = 1-6' 
+results.gpcm <- mirt(data=sense_of_belongling, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["sense_of_belongling"] <- fullscores_gpcm[,1]
+
+
+empathy <- data[c("ST215Q01HA","ST215Q02HA","ST215Q03HA", "ST215Q04HA",
+                  "ST215Q05HA")]
+model.gpcm <- 'empathy = 1-5' 
+results.gpcm <- mirt(data=empathy, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["empathy"] <- fullscores_gpcm[,1]
+
+
+student_competition <- data[c("ST205Q01HA","ST205Q02HA","ST205Q03HA", "ST205Q04HA")]
+model.gpcm <- 'student_competition = 1-4' 
+results.gpcm <- mirt(data=student_competition, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["student_competition"] <- fullscores_gpcm[,1]
+
+
+skipped_or_late_class <- data[c("ST062Q01TA","ST062Q02TA","ST062Q03TA")]
+model.gpcm <- 'skipped_or_late_class = 1-3' 
+results.gpcm <- mirt(data=skipped_or_late_class, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["skipped_or_late_class"] <- fullscores_gpcm[,1]
+
+
+parental_support <- data[c("ST123Q02NA","ST123Q03NA","ST123Q04NA")]
+model.gpcm <- 'parental_support = 1-3' 
+results.gpcm <- mirt(data=parental_support, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["parental_support"] <- fullscores_gpcm[,1]
+
+
+exposure_to_bulling <- data[c("ST038Q03NA","ST038Q04NA","ST038Q05NA",
+                              "ST038Q06NA","ST038Q07NA","ST038Q08NA")]
+model.gpcm <- 'exposure_to_bulling = 1-6' 
+results.gpcm <- mirt(data=exposure_to_bulling, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["exposure_to_bulling"] <- fullscores_gpcm[,1]
+
+
+attitude_bulling <- data[c("ST207Q01HA","ST207Q02HA","ST207Q03HA",
+                           "ST207Q04HA", "ST207Q05HA")]
+model.gpcm <- 'attitude_bulling = 1-5' 
+results.gpcm <- mirt(data=attitude_bulling, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["attitude_bulling"] <- fullscores_gpcm[,1]
+
+
+student_cooperation <- data[c("ST206Q01HA","ST206Q02HA","ST206Q03HA",
+                           "ST206Q04HA")]
+model.gpcm <- 'student_cooperation = 1-4' 
+results.gpcm <- mirt(data=student_cooperation, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+fullscores_gpcm <- fscores(results.gpcm)
+data["student_cooperation"] <- fullscores_gpcm[,1]
+
+#data_1 <- data
+data <- data_1
+```
+
+
+```{r}
+#step 2:
+data1 <- mutate(data,
+               parental_education = ST005Q01TA + ST007Q01TA, #1
+               parental_qualification = max(c(ST006Q01TA, ST006Q02TA,ST006Q03TA,
+                                              ST006Q04TA, ST008Q01TA,ST008Q02TA,
+                                              ST008Q03TA,ST008Q04TA)), #1
+               home_posessions = ST011Q01TA+ ST011Q02TA+ ST011Q03TA+ ST011Q04TA+ ST011Q05TA+
+                       ST011Q06TA+ ST011Q07TA+ ST011Q08TA+ ST011Q09TA+ ST011Q10TA+ 
+                       ST011Q11TA+ ST011Q12TA+ ST011Q16NA+ ST012Q01TA+ ST012Q02TA+
+                       ST012Q03TA+ ST012Q05NA+ ST012Q06NA+ ST012Q07NA+ ST012Q08NA+
+                       ST012Q09NA+ ST013Q01TA, #1
+               age_of_ISCED0 = ST125Q01NA, #1
+               age_of_ISCED1 = ST126Q01TA, #1
+               repeat_grade = ST127Q01TA + ST127Q02TA + ST127Q03TA, #1
+               life_satisfaction = ST016Q01NA, #1
+              reading_performance = 1/10*(PV1READ + PV2READ + PV3READ + PV4READ+ PV5READ + 
+                                    PV6READ+ PV7READ+ PV8READ+ PV9READ+ PV10READ),
+              math_performance = 1/10*(PV1MATH+ PV2MATH+ PV3MATH+ PV4MATH+ PV5MATH+ 
+                                 PV6MATH+ PV7MATH+ PV8MATH+ PV9MATH+ PV10MATH), 
+              science_performance = 1/10*(PV1SCIE+ PV2SCIE+ PV3SCIE+ PV4SCIE+ PV5SCIE+ 
+                                      PV6SCIE+ PV7SCIE+ PV8SCIE+ PV9SCIE+ PV10SCIE))
+```
+
+
+```{r}
+#step2 dummy coding
+data2 <- mutate(data1, gender = ST004D01T, #2
+               fixed_mindset = ST184Q01HA, #2
+               scared = ST186Q06HA, #2
+               lively = ST186Q07HA, #2
+               miserable = ST186Q10HA, #2
+               proud = ST186Q09HA,#2
+               afraid = ST186Q02HA,#2
+               sad = ST186Q08HA)#2                
+
+colnames(data2)
+data2_categori <- data2[c(227:234)]
+data2 <- data2[c(192:226)]
+
+colnames(data2_categori)
+
+for(i in 1:ncol(data2_categori)){
+  data2_categori[, i] <- as.character(data2_categori[,i])
+}
+
+#install.packages("fastDummies")
+library(fastDummies)
+
+data2_categori <- dummy_columns(data2_categori)
+colnames(data2_categori)
+
+data2 <- cbind(data2, data2_categori)
+colnames(data2)
+
+data_2 <- data2
+```
+
+```{r}
+#drop unwanted variables for 597
+drop <- c("ST019AQ01T", "immigration_background", 
+          "ST021Q01TA", "age_of_immigration","ST019CQ01T",
+          "ST019BQ01T","parental_immigration","ST060Q01NA",
+          "class_per_week",
+          "munites_per_class", "ST061Q01NA", "ST152Q05IA", 
+          "ST152Q06IA", "ST152Q07IA", "ST152Q08IA", "self_efficacy.1", "disciplinary_climate.1", "teacher_support.1", "teacher_understanding.1", "teacher_feedback.1", "teacher_directed_instruction.1", "adaptive_instruction.1", "teacher_feedback.1", "teacher_enthusiasm.1")
+
+datadrop <- data2[!(names(data2) %in% drop)]
+```
+
+
+```{r}
+rev(colnames(datadrop))
+```
+
+
+```{r}
+write.csv(datadrop, "D:\\Working_directory\\597final.csv")
+print("done")
+```
+
+
+
+
+
+```{r}
+focal_2 <- c(#School location:
+  "SC001Q01TA", 
+
+#school owner:
+  "SC013Q01TA",
+  
+#school disadvantages:
+  "SC017Q02NA", "SC017Q03NA", "SC017Q04NA", "SC017Q05NA", "SC017Q06NA", "SC017Q07NA", "SC017Q08NA",
+
+#school competition:
+  "SC011Q01TA",
+
+#differential classrooms
+  "SC042Q01TA",
+  "SC042Q02TA",
+
+#purpose of assessments
+  "SC154Q01HA", "SC154Q02HA", "SC154Q03HA", "SC154Q04HA", "SC154Q05HA", "SC154Q06HA", "SC154Q07HA", "SC154Q08HA", "SC154Q09HA", "SC154Q10HA", "SC154Q11HA",
+  
+#release of assessment results
+  "SC036Q01TA", "SC036Q02TA", "SC036Q03TA",
+  
+#school-level students adverse behaviors
+  "SC061Q01TA", "SC061Q02TA", "SC061Q03TA", "SC061Q04TA", "SC061Q05TA", "SC061Q06TA", "SC061Q07TA", "SC061Q08TA", "SC061Q09TA", "SC061Q10TA",
+
+#enrollment by gender
+  "SC002Q01TA",  "SC002Q02TA",
+
+#average classroom size
+  "SC003Q01TA",
+
+#after-class activities
+  "SC053Q01TA", "SC053Q02TA", "SC053Q03TA", "SC053Q04TA", "SC053Q12IA", "SC053Q13IA", "SC053Q09TA",
+  "SC053Q10TA", "SC053Q14IA", "SC053Q15IA", "SC053Q16IA", "SC053Q11TA", 
+
+#help for learning
+  "SC052Q01NA", "SC052Q02NA", "SC052Q03HA")
+
+data1 <- data1[focal_2]  
+
+for(i in 1:ncol(data1)){
+   data1[, i] = as.character(data1[, i]) 
+}
+
+```
+
+
+```{r}
+data1[data1 == "A village, hamlet or rural area (fewer than 3 000 people)"] <- "1"
+data1[data1 == "A small town (3 000 to about 15 000 people)"] <- "2"
+data1[data1 == "A town (15 000 to about 100 000 people)"] <- "3"
+data1[data1 == "A city (100 000 to about 1 000 000 people)"] <- "4"
+data1[data1 == "A large city (with over 1 000 000 people)"] <- "5"
+
+data1[data1 == "A public school (This is a school managed directly or indirectly by a public education authority, government agency, or governing board appointed by government or elected by public franchise.)"] <- "1"
+data1[data1 == "A private school (This is a school managed directly or indirectly by a non-government organisation; e.g. a church, trade union, business, or other private institution.)"] <- "0"
+
+data1[data1 == "Not at all"] <- "0"
+data1[data1 == "Very little"] <- "1"
+data1[data1 == "To some extent"] <- "2"
+data1[data1 == "A lot"] <- "3"
+
+data1[data1 == "There are no other schools in this area that compete for our students."] <- "0"
+data1[data1 == "There is one other school in this area that competes for our students."] <- "1"
+data1[data1 == "There are two or more other schools in this area that compete for our students."] <- "2"
+
+data1[data1 == "For all subjects"] <- "1"
+data1[data1 == "For some subjects"] <- "2"
+data1[data1 == "Not for any subjects"] <- "3"
+
+data1[data1 == "Yes"] <- "1"
+data1[data1 == "No"] <- "0"
+
+data1[data1 == "15 students or fewer"] <- "1"
+data1[data1 == "16-20 students"] <- "2"
+data1[data1 == "21-25 students"] <- "3"
+data1[data1 == "26-30 students"] <- "4"
+data1[data1 == "31-35 students"] <- "5"
+data1[data1 == "36-40 students"] <- "6"
+data1[data1 == "46-50 students"] <- "7"
+data1[data1 == "41-45 students"] <- "8"
+data1[data1 == "More than 50 students"] <- "9"
+
+
+for(i in 1:ncol(data1)){
+   data1[, i] = as.numeric(data1[, i]) 
+}
+```
+
+
+```{r}
+focal_3 <- c(#teacher gender
+  "TC001Q01NA",
+
+#teacher age
+  "TC002Q01NA",
+  
+#Year of experience
+  "TC007Q01NA", "TC007Q01NA",
+
+#Teacher training
+  "TC014Q01HA",
+
+#teacher qualification
+  "TC015Q01NA",   ##nominal
+
+#PD activities
+  "TC045Q01N",
+  "TC045Q02N",
+  "TC045Q03N",
+  "TC045Q04N",
+  "TC045Q05N",
+  "TC045Q06N",
+  "TC045Q07N",
+  "TC045Q08N",
+  "TC045Q09N",
+  "TC045Q10N",
+  "TC045Q11N",
+  "TC045Q12N",
+  "TC045Q13N",
+  "TC045Q14N",
+  "TC045Q15N",
+  "TC045Q16N",
+  "TC045Q17N",
+  "TC045Q18N",
+
+#PD gap
+  "TC185Q01HA",
+  "TC185Q02HA",
+  "TC185Q03HA",
+  "TC185Q04HA",
+  "TC185Q05HA",
+  "TC185Q06HA",
+  "TC185Q07HA",
+  "TC185Q08HA",
+  "TC185Q09HA",
+  "TC185Q10HA",
+  "TC185Q11HA",
+  "TC185Q12HA",
+  "TC185Q13HA",
+  "TC185Q14HA",
+  "TC185Q15HA",
+  "TC185Q16HA",
+  "TC185Q17HA",
+  "TC185Q18HA",
+  
+  
+#Job satisfaction
+  "TC198Q01HA",
+  "TC198Q02HA",
+  "TC198Q03HA",
+  "TC198Q04HA",
+  "TC198Q05HA",
+  "TC198Q06HA",
+  "TC198Q07HA",
+  "TC198Q08HA",
+  "TC198Q09HA",
+  "TC198Q10HA",
+
+#teacher self-belief
+  "TC199Q01HA",
+  "TC199Q02HA",
+  "TC199Q03HA",
+  "TC199Q04HA",
+  "TC199Q05HA",
+  "TC199Q06HA",
+  "TC199Q07HA",
+  "TC199Q08HA",
+  "TC199Q09HA",
+  "TC199Q10HA",
+  "TC199Q11HA",
+  "TC199Q12HA",
+
+#school_disadvantage_teacher
+  "TC028Q01NA",
+  "TC028Q02NA",
+  "TC028Q03NA",
+  "TC028Q04NA",
+  "TC028Q05NA",
+  "TC028Q06NA",
+  "TC028Q07NA",
+  "TC028Q08NA",
+
+#class_interaction
+  "TC207Q01HA",
+  "TC207Q02HA",
+  "TC207Q03HA",
+  "TC207Q04HA",
+  "TC207Q05HA",
+  "TC207Q06HA",
+  "TC207Q07HA",
+
+#teaching method
+  "TC054Q01NA",
+  "TC054Q02NA",
+  "TC054Q03NA",
+  "TC054Q04NA",
+  "TC054Q05NA",
+  "TC054Q06NA",
+  "TC054Q07NA",
+
+#feedback
+  "TC192Q01HA",
+  "TC192Q02HA",
+  "TC192Q03HA",
+  "TC192Q04HA",
+  "TC192Q05HA")
+
+data2 <- data2[focal_3]  
+
+for(i in 1:ncol(data2)){
+   data2[, i] = as.character(data2[, i]) 
+}
+```
+
+```{r}
+data2[data2 == "Female"] <- "1"
+data2[data2 == "Male"] <- "0"
+
+data2[data2 == "No"] <- "0"
+data2[data2 == "Yes, a programme of 1 year or less"] <- "1"
+data2[data2 == "Yes, a programme longer than 1 year"] <- "2"
+
+data2[data2 == "Included in my teacher education or training programme or other professional qualification"] <- "1"
+data2[data2 == "Included in my professional development activities during the last 12 months"] <- "0"
+
+data2[data2 == "Strongly disagree"] <- "0"
+data2[data2 == "Disagree"] <- "1"
+data2[data2 == "Agree"] <- "2"
+data2[data2 == "Strongly agree"] <- "3"
+
+data2[data2 == "Not at all"] <- "0"
+data2[data2 == "To some extent"] <- "1"
+data2[data2 == "Quite a bit"] <- "2"
+data2[data2 == "A lot"] <- "3"
+
+data2[data2 == "Never or almost never"] <- "0"
+data2[data2 == "Some lessons"] <- "1"
+data2[data2 == "Many lessons"] <- "2"
+data2[data2 == "Every lesson or almost every lesson"] <- "3"
+
+data2[data2 == "No need at present"] <- "0"
+data2[data2 == "Low level of need"] <- "1"
+data2[data2 == "Moderate level of need"] <- "2"
+data2[data2 == "High level of need"] <- "3"
+
+for(i in 1:ncol(data2)){
+   data2[, i] = as.numeric(data2[, i]) 
+}
+```
+

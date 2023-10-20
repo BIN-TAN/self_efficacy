@@ -58,8 +58,8 @@ for train_ix, test_ix in cv_outer.split(X):
     model = XGBRegressor(random_state=99) 
 
     space = dict() 
-    space['n_estimators'] = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500] 
-    space['max_depth'] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] 
+    space['n_estimators'] = [50, 100, 150] 
+    space['max_depth'] = [5, 10, 15, 20, 25] 
 
     search = GridSearchCV(model, space, 
                           scoring = ["r2", "neg_mean_squared_error",

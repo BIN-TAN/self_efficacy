@@ -1,0 +1,61 @@
+---
+title: "convert scores to IRT scores"
+author: "Bin Tan"
+date: "23/11/2021"
+output: html_document
+---
+
+
+```{r}
+data_theta <- data[c("ST188Q01HA", "ST188Q02HA", "ST188Q03HA", 
+                     "ST188Q06HA", "ST188Q07HA" )]
+
+library(mirt)
+
+model.gpcm <- 'self_efficacy = 1-5' 
+results.gpcm <- mirt(data=data_theta, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+coef.gpcm <- coef(results.gpcm, IRTpars=TRUE, simplify=TRUE)
+items.gpcm <- as.data.frame(coef.gpcm$items)
+colnames(items.gpcm) <- c("discrimination", "threshold1", 
+                         "threshold2", "threshold3") 
+print(items.gpcm)
+fullscores_gpcm <- fscores(results.gpcm)
+
+data["theta"] <- fullscores_gpcm
+```
+
+```{r}
+data_theta <- data[c("ST188Q01HA", "ST188Q02HA", "ST188Q03HA", 
+                     "ST188Q06HA", "ST188Q07HA" )]
+
+library(mirt)
+
+model.gpcm <- 'self_efficacy = 1-5' 
+results.gpcm <- mirt(data=data_theta, model=model.gpcm, itemtype="gpcm", SE=TRUE, verbose=FALSE)
+coef.gpcm <- coef(results.gpcm, IRTpars=TRUE, simplify=TRUE)
+items.gpcm <- as.data.frame(coef.gpcm$items)
+colnames(items.gpcm) <- c("discrimination", "threshold1", 
+                         "threshold2", "threshold3") 
+print(items.gpcm)
+fullscores_gpcm <- fscores(results.gpcm)
+
+data["theta"] <- fullscores_gpcm
+
+
+self_efficacy_irt <- fullscores_gpcm*20 + 100
+mean(self_efficacy_irt)
+sd(self_efficacy_irt)
+max(self_efficacy_irt) 
+min(self_efficacy_irt)
+IQR(fullscores_gpcm)
+
+
+hist(self_efficacy_irt, main="Histogram of self-efficacy IRT scores",
+        xlab="Self-efficacy IRT scores",
+        ylab="Frequency")
+```
+
+```{r}
+write.csv(data, "D:\\Working_directory\\597theta_self_efficacy.csv")
+```
+
